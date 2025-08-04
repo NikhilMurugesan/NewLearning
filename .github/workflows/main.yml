@@ -1,0 +1,38 @@
+name: Daily Auto Commit
+
+on:
+  schedule:
+    - cron: '0 0 * * *'   # Every day at midnight UTC
+  workflow_dispatch:       # Optional: allow manual run
+
+permissions:
+  contents: write
+
+jobs:
+  auto-commit:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+      with:
+        ref: main
+
+    - name: Update file and commit
+      run: |
+        FILE="daily_commit.md"
+        if [ ! -f "$FILE" ]; then
+          echo "Auto Commit Tracker" > "$FILE"
+          echo "commit count: 1" >> "$FILE"
+        else
+          COUNT=$(grep -oP 'commit count: \K\d+' "$FILE" || echo "0")
+          NEW_COUNT=$((COUNT + 1))
+          sed -i "s/commit count: .*/commit count: $NEW_COUNT/" "$FILE"
+        fi
+
+        git config --global user.name "Nikhil Murugesan"
+        git config --global user.email "mmmm.nikhil@example.com"
+
+        git add "$FILE"
+        git commit -m "Auto commit #$NEW_COUNT" || echo "No changes to commit"
+        git push https://x-access-token:${{ secrets.PERSONAL_TOKEN }}@github.com/NikhilMurugesan/NewLearning.git
